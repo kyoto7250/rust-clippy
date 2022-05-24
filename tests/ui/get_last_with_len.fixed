@@ -5,16 +5,34 @@
 fn dont_use_last() {
     let x = vec![2, 3, 5];
     let _ = x.last(); // ~ERROR Use x.last()
+
+    let y = [2, 3, 5];
+    let _ = y.last(); // ~ERROR Use y.last()
+
+    let z = &[2, 3, 5];
+    let _ = z.last(); // ~ERROR Use z.last()
 }
 
 fn indexing_two_from_end() {
     let x = vec![2, 3, 5];
     let _ = x.get(x.len() - 2);
+
+    let y = [2, 3, 5];
+    let _ = y.get(y.len() - 2);
+
+    let z = &[2, 3, 5];
+    let _ = z.get(z.len() - 2);
 }
 
 fn index_into_last() {
     let x = vec![2, 3, 5];
     let _ = x[x.len() - 1];
+
+    let y = [2, 3, 5];
+    let _ = y[y.len() - 1];
+
+    let z = &[2, 3, 5];
+    let _ = z[z.len() - 1];
 }
 
 fn use_last_with_different_vec_length() {

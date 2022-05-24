@@ -6,5 +6,17 @@ LL |     let _ = x.get(x.len() - 1); // ~ERROR Use x.last()
    |
    = note: `-D clippy::get-last-with-len` implied by `-D warnings`
 
-error: aborting due to previous error
+error: accessing last element with `y.get(y.len() - 1)`
+  --> $DIR/get_last_with_len.rs:10:13
+   |
+LL |     let _ = y.get(y.len() - 1); // ~ERROR Use y.last()
+   |             ^^^^^^^^^^^^^^^^^^ help: try: `y.last()`
+
+error: accessing last element with `z.get(z.len() - 1)`
+  --> $DIR/get_last_with_len.rs:13:13
+   |
+LL |     let _ = z.get(z.len() - 1); // ~ERROR Use z.last()
+   |             ^^^^^^^^^^^^^^^^^^ help: try: `z.last()`
+
+error: aborting due to 3 previous errors
 
