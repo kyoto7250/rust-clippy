@@ -112,3 +112,221 @@ fn allow_test() {
     let v = [1].iter().collect::<Vec<_>>();
     v.into_iter().collect::<HashSet<_>>();
 }
+
+mod issue_8553 {
+    fn test_for() {
+        let vec = vec![1, 2];
+        let w: Vec<usize> = vec.iter().map(|i| i * i).collect();
+
+        for i in 0..2 {
+            // Do not lint, because this method call does not exist in the same block as the declaration.
+            w.contains(&i);
+        }
+
+        for i in 0..2 {
+            let y: Vec<usize> = vec.iter().map(|k| k * k).collect();
+            // Do lint, this method call also exists in the same block as the declaration
+            y.contains(&i);
+        }
+
+        for i in 0..2 {
+            let z: Vec<usize> = vec.iter().map(|k| k * k).collect();
+            for j in 0..2 {
+                // Do not lint, because this method call does not exist in the same block as the declaration.
+                z.contains(&j);
+            }
+
+            // Do not lint, because this variable already used.
+            z.contains(&i);
+        }
+
+        // Do not lint, because this variable is used.
+        w.contains(&0);
+    }
+
+    fn test_while() {
+        let vec = vec![1, 2];
+        let x: Vec<usize> = vec.iter().map(|i| i * i).collect();
+        let mut n = 0;
+        while n > 1 {
+            // Do not lint, because this method call does not exist in the same block as the declaration.
+            x.contains(&n);
+            n += 1;
+        }
+
+        while n > 2 {
+            let y: Vec<usize> = vec.iter().map(|k| k * k).collect();
+            // Do lint, this method call also exists in the same block as the declaration
+            y.contains(&n);
+            n += 1;
+        }
+
+        while n > 3 {
+            let z: Vec<usize> = vec.iter().map(|k| k * k).collect();
+            while n > 4 {
+                // Do not lint, because this method call does not exist in the same block as the declaration.
+                z.contains(&n);
+                n += 1;
+            }
+            // Do not lint, because this variable already used.
+            z.contains(&n);
+        }
+    }
+
+    fn test_loop() {
+        let vec = vec![1, 2];
+        let x: Vec<usize> = vec.iter().map(|i| i * i).collect();
+        let mut n = 0;
+        loop {
+            if n < 1 {
+                // Do not lint, because this method call does not exist in the same block as the declaration.
+                x.contains(&n);
+                n += 1;
+            } else {
+                break;
+            }
+        }
+
+        loop {
+            if n < 2 {
+                let y: Vec<usize> = vec.iter().map(|k| k * k).collect();
+                // Do lint, this method call also exists in the same block as the declaration
+                y.contains(&n);
+                n += 1;
+            } else {
+                break;
+            }
+        }
+
+        loop {
+            let z: Vec<usize> = vec.iter().map(|k| k * k).collect();
+            loop {
+                if n < 4 {
+                    // Do not lint, because this method call does not exist in the same block as the declaration.
+                    z.contains(&n);
+                    n += 1;
+                } else {
+                    break;
+                }
+            }
+            if n < 3 {
+                break;
+            } else {
+                // Do not lint, because this variable already used.
+                z.contains(&n);
+            }
+        }
+    }
+
+    fn test_while_let() {
+        let vec = vec![1, 2];
+        let x: Vec<usize> = vec.iter().map(|i| i * i).collect();
+        let optional = Some(0);
+        let mut n = 0;
+        while let Some(value) = optional {
+            if n < 1 {
+                // Do not lint, because this method call does not exist in the same block as the declaration.
+                x.contains(&n);
+                n += 1;
+            } else {
+                break;
+            }
+        }
+
+        while let Some(value) = optional {
+            let y: Vec<usize> = vec.iter().map(|k| k * k).collect();
+            if n < 2 {
+                // Do lint, this method call also exists in the same block as the declaration
+                y.contains(&n);
+                n += 1;
+            } else {
+                break;
+            }
+        }
+
+        while let Some(value) = optional {
+            let z: Vec<usize> = vec.iter().map(|k| k * k).collect();
+            while let Some(value) = optional {
+                if n < 4 {
+                    // Do not lint, because this method call does not exist in the same block as the declaration.
+                    z.contains(&n);
+                    n += 1;
+                } else {
+                    break;
+                }
+            }
+            if n < 3 {
+                // Do not lint, because this variable already used.
+                z.contains(&n);
+                n += 1;
+            } else {
+                break;
+            }
+        }
+    }
+
+    fn test_if_cond() {
+        let vec = vec![1, 2];
+        let v: Vec<usize> = vec.iter().map(|i| i * i).collect();
+        let w = v.iter().collect::<Vec<_>>();
+        // Do lint
+        for _ in w.into_iter().map(|x| x * x).collect::<Vec<_>>() {
+            todo!();
+        }
+    }
+
+    fn test_if_cond_false_case() {
+        let vec = vec![1, 2];
+        let v: Vec<usize> = vec.iter().map(|i| i * i).collect();
+        let w = v.iter().collect::<Vec<_>>();
+        // Do not lint, because v is used.
+        for _ in w.into_iter().map(|&x| x * x).collect::<Vec<_>>() {
+            todo!();
+        }
+
+        v.len();
+    }
+
+    fn test_while_cond() {
+        let mut vec = vec![1, 2];
+        let mut v: Vec<usize> = vec.iter().map(|i| i * i).collect();
+        let mut w = v.iter().collect::<Vec<_>>();
+        // Do lint
+        while 1 == w.len() {
+            todo!();
+        }
+    }
+
+    fn test_while_cond_false_case() {
+        let mut vec = vec![1, 2];
+        let mut v: Vec<usize> = vec.iter().map(|i| i * i).collect();
+        let mut w = v.iter().collect::<Vec<_>>();
+        // Do not lint, because w is used.
+        while 1 == w.len() {
+            todo!();
+        }
+
+        w.len();
+    }
+
+    fn test_while_let_cond() {
+        let mut vec = vec![1, 2];
+        let mut v: Vec<usize> = vec.iter().map(|i| i * i).collect();
+        let mut w = v.iter().collect::<Vec<_>>();
+        // Do lint
+        while let Some(i) = Some(w.len()) {
+            todo!();
+        }
+    }
+
+    fn test_while_let_cond_false_case() {
+        let mut vec = vec![1, 2];
+        let mut v: Vec<usize> = vec.iter().map(|i| i * i).collect();
+        let mut w = v.iter().collect::<Vec<_>>();
+        // Do not lint, because w is used.
+        while let Some(i) = Some(w.len()) {
+            todo!();
+        }
+        w.len();
+    }
+}

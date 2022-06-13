@@ -1,5 +1,6 @@
 use super::NEEDLESS_COLLECT;
 use clippy_utils::diagnostics::{span_lint_and_sugg, span_lint_hir_and_then};
+use clippy_utils::higher;
 use clippy_utils::source::{snippet, snippet_with_applicability};
 use clippy_utils::sugg::Sugg;
 use clippy_utils::ty::is_type_diagnostic_item;
@@ -183,8 +184,19 @@ struct IterFunctionVisitor<'a, 'tcx> {
 }
 impl<'tcx> Visitor<'tcx> for IterFunctionVisitor<'_, 'tcx> {
     fn visit_block(&mut self, block: &'tcx Block<'tcx>) {
+        // Check function calls on our collection
         for (expr, hir_id) in block.stmts.iter().filter_map(get_expr_and_hir_id_from_stmt) {
-            self.visit_block_expr(expr, hir_id);
+            if let Some(higher::WhileLet { .. }) = higher::WhileLet::hir(expr) {
+                continue;
+            } else if let Some(higher::While { .. }) = higher::While::hir(expr) {
+                continue;
+            } else if let Some(higher::ForLoop { .. }) = higher::ForLoop::hir(expr) {
+                continue;
+            } else if let ExprKind::Loop { .. } = expr.kind {
+                continue;
+            } else {
+                self.visit_block_expr(expr, hir_id);
+            }
         }
         if let Some(expr) = block.expr {
             self.visit_block_expr(expr, None);
@@ -192,7 +204,6 @@ impl<'tcx> Visitor<'tcx> for IterFunctionVisitor<'_, 'tcx> {
     }
 
     fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
-        // Check function calls on our collection
         if let ExprKind::MethodCall(method_name, [recv, args @ ..], _) = &expr.kind {
             if method_name.ident.name == sym!(collect) && is_trait_method(self.cx, expr, sym::Iterator) {
                 self.current_mutably_captured_ids = get_captured_ids(self.cx, self.cx.typeck_results().expr_ty(recv));
