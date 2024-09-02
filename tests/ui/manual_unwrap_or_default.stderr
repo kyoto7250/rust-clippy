@@ -83,5 +83,17 @@ LL | |             _ => 0,
 LL | |         },
    | |_________^ help: replace it with: `(*b).unwrap_or_default()`
 
-error: aborting due to 8 previous errors
+error: if let can be simplified with `.unwrap_or_default()`
+  --> tests/ui/manual_unwrap_or_default.rs:138:13
+   |
+LL |     let _ = if let Some(x) = a { x } else { i32::default() };
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: replace it with: `a.unwrap_or_default()`
+
+error: if let can be simplified with `.unwrap_or_default()`
+  --> tests/ui/manual_unwrap_or_default.rs:139:13
+   |
+LL |     let _ = if let Some(x) = Some(99) { x } else { i32::default() };
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: replace it with: `Some(99).unwrap_or_default()`
+
+error: aborting due to 10 previous errors
 

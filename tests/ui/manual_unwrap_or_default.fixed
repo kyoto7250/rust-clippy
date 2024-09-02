@@ -99,3 +99,9 @@ fn issue_12928() {
     let y = if let Some(Y(a, _)) = x { a } else { 0 };
     let y = if let Some(Y(a, ..)) = x { a } else { 0 };
 }
+
+fn issue_12670() {
+    let a: Option<i32> = None;
+    let _ = a.unwrap_or_default();
+    let _ = Some(99).unwrap_or_default();
+}
